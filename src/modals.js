@@ -1,37 +1,12 @@
-export default class Modals {
-  constructor() {
-    this._list = [];
-  }
+export const current = (modals) => modals.length > 0 ? modals[modals.length - 1] : null;
+export const select = (modals) => {
+  const withBlocker = modals.filter((m) => m.$blocker);
 
-  get current() {
-    return this.count > 0 ? this._list[this.count - 1] : null;
-  }
+  return withBlocker.slice(0, 1)
+    .map((m) => ({el: m.$blocker, classPresent: "current", classAbsent: "behind"}))
+    .concat(withBlocker.slice(1).map((m) => ({el: m.$blocker, classPresent: "behind", classAbsent: "current"})));
+};
 
-  add(m) {
-    this._list.push(m);
-  }
-
-  select() {
-    const withBlocker = this._list.filter((m) => m.$blocker);
-
-    withBlocker.slice(0, 1).forEach((m) => {
-      m.$blocker
-        .toggleClass("current", true)
-        .toggleClass("behind", false);
-    });
-
-    withBlocker.slice(1).forEach((m) => {
-      m.$blocker
-        .toggleClass("current", false)
-        .toggleClass("behind", true);
-    });
-  }
-
-  pop() {
-    return this._list.pop();
-  }
-
-  get count() {
-    return this._list.length;
-  }
-}
+export const init = (modals) => modals.slice(0, modals.length - 1);
+export const count = (modals) => modals.length;
+export const add = (modals, m) => modals.concat(m);

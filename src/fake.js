@@ -4,14 +4,16 @@ export class FakeModal {
   }
 }
 
-class JqElement {
+export class JqElement {
   constructor() {
     this._classes = new Set();
+    this._css = {};
+    this._children = [];
   }
 
   toggleClass(cls, toggle) {
     if (toggle) {
-      this._classes.add(cls);
+      this.addClass(cls);
     } else {
       this._classes.delete(cls);
     }
@@ -19,7 +21,35 @@ class JqElement {
     return this;
   }
 
+  addClass(cls) {
+    this._classes.add(cls);
+  }
+
+  removeClass(cls) {
+    this._classes.delete(cls);
+  }
+
   hasClass(cls) {
     return this._classes.has(cls);
+  }
+
+  css(name, value) {
+    if (value !== undefined) {
+      this._css[name] = value;
+    } else {
+      return this._css[name];
+    }
+  }
+
+  appendTo($parent) {
+    $parent.append(this);
+  }
+
+  append($el) {
+    this._children.push($el);
+  }
+
+  has($el) {
+    return Boolean(this._children.find(($x) => $el === $x));
   }
 }

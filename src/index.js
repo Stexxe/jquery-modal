@@ -3,7 +3,8 @@
     Version 0.9.2
 */
 
-import Modals from './modals';
+import {add, count, current, init, select} from './modals';
+import {jqEffect} from './jq';
 
 (function (factory) {
   // Making your jQuery plugin work better with npm tools
@@ -16,22 +17,7 @@ import Modals from './modals';
   }
 }(function($, window, document, undefined) {
 
-  const modals = new Modals();
-
-  // var modals = [],
-      // getCurrent = function() {
-      //   return modals.length ? modals[modals.length - 1] : null;
-      // },
-      // selectCurrent = function() {
-      //   var i,
-      //       selected = false;
-      //   for (i=modals.length-1; i>=0; i--) {
-      //     if (modals[i].$blocker) {
-      //       modals[i].$blocker.toggleClass('current',!selected).toggleClass('behind',selected);
-      //       selected = true;
-      //     }
-      //   }
-      // };
+  let modals = [];
 
   $.modal = function(el, options) {
     var remove, target;
@@ -42,8 +28,9 @@ import Modals from './modals';
     if (this.options.closeExisting)
       while ($.modal.isActive())
         $.modal.close(); // Close any open modals.
-    modals.add(this);
-    // modals.push(this);
+
+    modals = add(modals, this);
+
     if (el.is('a')) {
       target = el.attr('href');
       this.anchor = el;
@@ -63,17 +50,17 @@ import Modals from './modals';
         $.get(target).done(function(html) {
           if (!$.modal.isActive()) return;
           el.trigger($.modal.AJAX_SUCCESS);
-          var current = modals.current;//getCurrent();
-          current.$elm.empty().append(html).on($.modal.CLOSE, remove);
-          current.hideSpinner();
-          current.open();
+          var modal = current(modals);
+
+          modal.$elm.empty().append(html).on($.modal.CLOSE, remove);
+          modal.hideSpinner();
+          modal.open();
           el.trigger($.modal.AJAX_COMPLETE);
         }).fail(function() {
           el.trigger($.modal.AJAX_FAIL);
-          var current = modals.current;//getCurrent();
-          current.hideSpinner();
-          modals.pop();
-          // modals.pop(); // remove expected modal from the list
+          var modal = current(modals);
+          modal.hideSpinner();
+          modals = init(modals);
           el.trigger($.modal.AJAX_COMPLETE);
         });
       }
@@ -100,8 +87,8 @@ import Modals from './modals';
         this.show();
       }
       $(document).off('keydown.modal').on('keydown.modal', function(event) {
-        var current = modals.current;//getCurrent();
-        if (event.which === 27 && current.options.escapeClose) current.close();
+        var modal = current(modals);
+        if (event.which === 27 && modal.options.escapeClose) modal.close();
       });
       if (this.options.clickClose)
         this.$blocker.click(function(e) {
@@ -111,8 +98,7 @@ import Modals from './modals';
     },
 
     close: function() {
-      modals.pop();
-      // modals.pop();
+      modals = init(modals);
       this.unblock();
       this.hide();
       if (!$.modal.isActive())
@@ -124,8 +110,8 @@ import Modals from './modals';
       this.$body.css('overflow','hidden');
       this.$blocker = $('<div class="' + this.options.blockerClass + ' blocker current"></div>').appendTo(this.$body);
 
-      modals.select();
-      // selectCurrent();
+      jqEffect(select(modals));
+
       if(this.options.doFade) {
         this.$blocker.css('opacity',0).animate({opacity: 1}, this.options.fadeDuration);
       }
@@ -139,8 +125,7 @@ import Modals from './modals';
         this.$blocker.children().appendTo(this.$body);
         this.$blocker.remove();
         this.$blocker = null;
-        modals.select();
-        // selectCurrent();
+        jqEffect(select(modals));
         if (!$.modal.isActive())
           this.$body.css('overflow','');
       }
@@ -198,17 +183,17 @@ import Modals from './modals';
   $.modal.close = function(event) {
     if (!$.modal.isActive()) return;
     if (event) event.preventDefault();
-    var current = modals.current;//getCurrent();
-    current.close();
-    return current.$elm;
+    var modal = current(modals);
+    modal.close();
+    return modal.$elm;
   };
 
   // Returns if there currently is an active modal
   $.modal.isActive = function () {
-    return modals.count > 0;
+    return count(modals) > 0;
   };
 
-  $.modal.getCurrent = () => modals.current;
+  $.modal.getCurrent = () => current(modals);
 
   $.modal.defaults = {
     closeExisting: true,
